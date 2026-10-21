@@ -14,6 +14,8 @@ import {
   SHIPMENTS_BY_STATUS_GAUGE,
   OPEN_DISPUTES_GAUGE,
   DISPUTE_RESOLUTION_TIME_HISTOGRAM,
+  WEBHOOK_DELIVERIES_COUNTER,
+  WEBHOOK_DELIVERY_DURATION_HISTOGRAM,
 } from './metrics.service';
 import { resolveBuildInfo } from '../build-info';
 
@@ -83,6 +85,16 @@ export async function collectOpenDisputes(this: Gauge<string>, prisma: PrismaSer
       collect: collectOpenDisputes,
     }),
     makeHistogramProvider({ name: DISPUTE_RESOLUTION_TIME_HISTOGRAM, help: 'Time taken to resolve disputes in hours', buckets: [1, 6, 12, 24, 48, 72, 168, 336] }),
+    makeCounterProvider({
+      name: WEBHOOK_DELIVERIES_COUNTER,
+      help: 'Total webhook delivery attempts by outcome and HTTP status class',
+      labelNames: ['result', 'status_code_class'],
+    }),
+    makeHistogramProvider({
+      name: WEBHOOK_DELIVERY_DURATION_HISTOGRAM,
+      help: 'Webhook delivery attempt duration in seconds',
+      buckets: [0.01, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30],
+    }),
     makeGaugeProvider({
       name: SHIPMENTS_BY_STATUS_GAUGE,
       help: 'Current number of shipments in each status',

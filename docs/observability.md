@@ -23,6 +23,8 @@ Defined in `src/common/metrics/metrics.service.ts` and registered in
 | `chainsettle_shipments_created_total` | Counter | — | Shipments registered via the API |
 | `chainsettle_active_shipments` | Gauge | — | Current count of ACTIVE shipments |
 | `chainsettle_http_request_duration_seconds` | Histogram | `method`, `route`, `status` | Per-route HTTP latency (buckets: 5 ms → 5 s) |
+| `chainsettle_webhook_deliveries_total` | Counter | `result`, `status_code_class` | Webhook delivery attempts grouped by result and HTTP status class (`none` for transport/payload failures) |
+| `chainsettle_webhook_delivery_duration_seconds` | Histogram | — | Webhook delivery attempt duration in seconds |
 
 ### Dead-letter queue (DLQ)
 
@@ -54,7 +56,27 @@ API prefix.
 | Error rate (5xx) | `rate(chainsettle_http_request_duration_seconds_count{status=~"5.."}[1m])` |
 | Events processed/s | `rate(chainsettle_events_processed_total[1m])` |
 | Event failures | `increase(chainsettle_events_failed_total[5m])` |
+| Webhook delivery failures | `rate(chainsettle_webhook_deliveries_total{result="failure"}[5m])` |
 | Active shipments | `chainsettle_active_shipments` |
+
+Example Prometheus alert rule for sustained webhook delivery failures:
+
+```yaml
+groups:
+  - name: chainsettle-webhooks
+    rules:
+      - alert: WebhookDeliveryFailureRateHigh
+        expr: >-
+          sum(rate(chainsettle_webhook_deliveries_total{result="failure"}[5m]))
+          /
+          clamp_min(sum(rate(chainsettle_webhook_deliveries_total[5m])), 1)
+          > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Webhook delivery failures exceed 5% for 10 minutes
+```
 
 ---
 
