@@ -27,7 +27,8 @@
     "check:sdk": "node scripts/check-sdk.js",
     "generate:sdk": "node scripts/generate-sdk.js",
     "dev:up": "docker compose up -d",
-    "dev:down": "docker compose down"
+    "dev:down": "docker compose down",
+    "check:migration": "node scripts/check-prisma-migration.js"
   },
   "dependencies": {
     "@apollo/server": "^4.0.0",
